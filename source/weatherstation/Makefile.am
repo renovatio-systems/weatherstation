@@ -13,6 +13,9 @@ weatherstation_LDFLAGS = $(AM_LDFLAGS)
 weatherstation_LDADD = \
     -lmosquitto \
     -lconfig \
+    -lopt3001 \
+    -lsht31 \
+    -lccs811 \
     -lrt
     
 ## Specify the compiler options
