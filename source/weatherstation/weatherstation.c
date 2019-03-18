@@ -243,7 +243,9 @@ static void read_opt3001(void)
     snprintf(buf, sizeof(buf), "%.4f", lux);
     status = mqtt_send(1, buf);
     if(status != 0)
-        printf("opt3001 mqtt_send error=%i\r\n", status);            
+        printf("opt3001 mqtt_send error=%i\r\n", status);
+    else
+        printf("opt3001 sensor read & send success\r\n");      
 }
 
 static void read_sht31(void)
@@ -264,13 +266,18 @@ static void read_sht31(void)
     status = mqtt_send(2, buf);
     if(status != 0)
         printf("sht31 (T) mqtt_send error=%i\r\n", status);            
+    else
+        printf("sht31 (T) sensor read & send success\r\n");      
 
     sleep(5);
 
     snprintf(buf, sizeof(buf), "%.1f", result.humidity);
     status = mqtt_send(3, buf);
     if(status != 0)
-        printf("sht31 (H) mqtt_send error=%i\r\n", status);            
+        printf("sht31 (H) mqtt_send error=%i\r\n", status);   
+    else
+        printf("sht31 (H) sensor read & send success\r\n");      
+
 
 }
 
@@ -287,6 +294,8 @@ static void read_ccs811(void)
         status = mqtt_send(4, buf);
         if(status != 0)
             printf("ccs811 (eCO2) mqtt_send error=%i\r\n", status);            
+        else
+            printf("ccs811 (eCO2) sensor read & send success\r\n");      
 
         sleep(5);
 
@@ -294,6 +303,8 @@ static void read_ccs811(void)
         status = mqtt_send(5, buf);
         if(status != 0)
             printf("ccs811 (TVOC) mqtt_send error=%i\r\n", status);            
+        else
+            printf("ccs811 (TVOC) sensor read & send success\r\n");      
 
     }
     else
