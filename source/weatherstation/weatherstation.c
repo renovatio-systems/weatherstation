@@ -147,7 +147,7 @@ static int32_t mqtt_send(int32_t field, char *msg)
             field,
             global_writeapikey
         );
-
+    printf("%s\t\t%s\r\n", topic, msg);
     return mosquitto_publish(mosq, NULL, topic, strlen(msg), msg, 0, 0);
 }
 
@@ -192,6 +192,12 @@ int main(int argc, char *argv[])
     bool sht31_detected = true;
     bool ccs811_detected = true;
 
+    printf("----------------------------------------------------------\r\n");
+    printf("Weather Station Daemon %s %s\r\n", __DATE__, __TIME__);
+    printf("----------------------------------------------------------\r\n");
+
+    sleep(1);
+
     /* Setup Weather Station Configuration */
     initialize_weatherstation_configuration();
 
@@ -212,7 +218,7 @@ int main(int argc, char *argv[])
         sht31_detected = false;        
     }
 
-    status = ccs811Init(global_ccs811_bus, global_ccs811_bus);
+    status = ccs811Init(global_ccs811_bus, global_ccs811_addr);
     if(status != 0)
     {
         printf("Cannot setup Digital Gas Sensor for Monitoring Indoor Air Quality\r\n");
@@ -244,8 +250,6 @@ static void read_opt3001(void)
     status = mqtt_send(1, buf);
     if(status != 0)
         printf("opt3001 mqtt_send error=%i\r\n", status);
-    else
-        printf("opt3001 sensor read & send success\r\n");      
 }
 
 static void read_sht31(void)
@@ -253,6 +257,15 @@ static void read_sht31(void)
     int32_t status = 0;
     struct sensorOutput result;
     char buf[64];
+    char i2c_dev[32];
+
+    snprintf(i2c_dev, sizeof(i2c_dev), "/dev/i2c-%d", global_sht31_bus);
+    global_sht31_handle = initializeSensor(i2c_dev, global_sht31_addr);
+    if(global_sht31_handle < 0)
+    {
+        printf("Cannot setup Digital Humidity Sensor SHT3x (RH/T)\r\n");
+        return;      
+    }
 
     result = parseEnvData(global_sht31_handle);
 
@@ -266,8 +279,6 @@ static void read_sht31(void)
     status = mqtt_send(2, buf);
     if(status != 0)
         printf("sht31 (T) mqtt_send error=%i\r\n", status);            
-    else
-        printf("sht31 (T) sensor read & send success\r\n");      
 
     sleep(5);
 
@@ -275,9 +286,6 @@ static void read_sht31(void)
     status = mqtt_send(3, buf);
     if(status != 0)
         printf("sht31 (H) mqtt_send error=%i\r\n", status);   
-    else
-        printf("sht31 (H) sensor read & send success\r\n");      
-
 
 }
 
@@ -294,8 +302,6 @@ static void read_ccs811(void)
         status = mqtt_send(4, buf);
         if(status != 0)
             printf("ccs811 (eCO2) mqtt_send error=%i\r\n", status);            
-        else
-            printf("ccs811 (eCO2) sensor read & send success\r\n");      
 
         sleep(5);
 
@@ -303,9 +309,6 @@ static void read_ccs811(void)
         status = mqtt_send(5, buf);
         if(status != 0)
             printf("ccs811 (TVOC) mqtt_send error=%i\r\n", status);            
-        else
-            printf("ccs811 (TVOC) sensor read & send success\r\n");      
-
     }
     else
     {
@@ -321,16 +324,19 @@ static void weatherstation(bool opt3001_detected, bool sht31_detected, bool ccs8
         if(opt3001_detected)
         {
             read_opt3001();
+            sleep(5);
         }
 
         if(sht31_detected)
         {
             read_sht31();
+            sleep(5);
         }
 
         if(ccs811_detected)
         {
             read_ccs811();
+            sleep(5);
         }
 
         
